@@ -1,0 +1,10 @@
+<manifest projecttype="ACCOUNTCUSTOMIZATION">
+  <projectname>final Customer Invoice</projectname>
+  <frameworkversion>1.0</frameworkversion>
+  <dependencies>
+    <features>
+      <feature required="true">INVOICEGROUP</feature>
+      <feature required="true">ADVANCEDPRINTING</feature>
+    </features>
+  </dependencies>
+</manifest>

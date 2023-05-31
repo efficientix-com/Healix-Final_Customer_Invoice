@@ -1,0 +1,9 @@
+<advancedpdftemplate scriptid="custtmpl_fb_invoice_group_dev" standard="STDTMPLINVCGROUP2ST">
+  <description></description>
+  <displaysourcecode>T</displaysourcecode>
+  <isinactive>F</isinactive>
+  <preferred>F</preferred>
+  <printtype>INVOICEGROUP</printtype>
+  <title>Healix - Invoice Group Dev</title>
+  <trantype>CUSTINVC</trantype>
+</advancedpdftemplate>
