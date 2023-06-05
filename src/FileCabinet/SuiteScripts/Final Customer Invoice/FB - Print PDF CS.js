@@ -168,6 +168,14 @@ function(https, log, record, search, url, message) {
     function saveRecord(scriptContext) {
 
     }
+
+
+    /**
+     * This function renders a button that opens a PDF file based on a specified template and record
+     * ID.
+     * @param templateID - The ID of the template that will be used for rendering the PDF.
+     * @param recordID - The ID of the record that the button is being rendered for.
+     */
     function renderButton(templateID, recordID) {
         try {
             if (templateID) {

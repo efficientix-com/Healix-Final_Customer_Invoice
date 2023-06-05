@@ -95,6 +95,16 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
             }
         }
 
+        /**
+         * This function retrieves general information about an invoice group record and its associated
+         * transactions.
+         * @param recordId - The internal ID of the invoice group record to retrieve information from.
+         * @returns an object with properties "success", "error", "data", and "trans". The "success"
+         * property indicates whether the function executed successfully or not. The "error" property
+         * contains any error message if the function encountered an error. The "data" property
+         * contains an object with general information about an invoice group, such as the document
+         * number, customer name, date, total amount,
+         */
         function getGeneralInformation(recordId) {
             var dataReturn = {sucess: false, error: '', data: '', trans: ''};
             try {
@@ -284,6 +294,17 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
             return dataReturn;
         }
 
+        /**
+         * The function searches for invoice data based on given filters and returns the data in a
+         * structured format.
+         * @param invoices - The parameter "invoices" is an array of internal IDs of invoices to be
+         * searched for in NetSuite.
+         * @returns an object with three properties: "success", "error", and "data". The "success"
+         * property is a boolean indicating whether the function executed successfully or not. The
+         * "error" property is a string containing an error message if the function encountered an
+         * error. The "data" property is an object containing information about the invoices that match
+         * the search criteria.
+         */
         function getInfoInvoices(invoices) {
             var dataReturn = {sucess: false, error: '', data: ''}
             try {
@@ -375,6 +396,17 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
             return dataReturn;
         }
 
+        /**
+         * The function takes in an object of invoice information, groups the items by category, and
+         * returns a new object with the grouped information.
+         * @param info - The input parameter "info" is an object containing information about invoices
+         * and their items. It has the following structure:
+         * @returns an object with three properties: "success", "error", and "data". The "success"
+         * property is a boolean indicating whether the function executed successfully or not. The
+         * "error" property is a string that contains an error message if the function encountered an
+         * error. The "data" property is an object that contains the grouped information based on the
+         * input provided to the function.
+         */
         function groupInformation(info) {
             var dataReturn = {sucess: false, error: '', data: ''};
             try {
@@ -428,6 +460,23 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
             return dataReturn;
         }
 
+        /**
+         * The function builds a JSON object containing general information, invoice information, and
+         * item information.
+         * @param generalInfo - An object containing general information about the customer or company,
+         * such as name, address, and contact information.
+         * @param itemsInfo - It is an object containing information about the items in the invoice.
+         * The keys of the object are the item IDs and the values are arrays of objects containing
+         * information about each item, such as the item name, quantity, price, and total.
+         * @param invoiceInfo - The invoiceInfo parameter is an object containing information about
+         * invoices, with the invoice IDs as keys and the invoice data (invoiceNum, invoiceTotal,
+         * invoiceDate) as values.
+         * @returns an object with three properties: "success", "error", and "data". The "success"
+         * property is a boolean indicating whether the function executed successfully or not. The
+         * "error" property is a string containing an error message if the function encountered an
+         * error, otherwise it is an empty string. The "data" property is an object containing the data
+         * that was built by the function
+         */
         function buildDataPDF(generalInfo, itemsInfo, invoiceInfo) {
             var dataReturn = {sucess: false, error: '', data: ''};
             try {
