@@ -4,7 +4,9 @@
   <dependencies>
     <features>
       <feature required="true">INVOICEGROUP</feature>
+      <feature required="true">SERVERSIDESCRIPTING</feature>
       <feature required="true">ADVANCEDPRINTING</feature>
+      <feature required="false">CREATESUITEBUNDLES</feature>
     </features>
   </dependencies>
 </manifest>

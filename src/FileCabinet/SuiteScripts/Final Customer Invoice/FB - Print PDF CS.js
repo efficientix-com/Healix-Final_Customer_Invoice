@@ -2,6 +2,16 @@
  * @NApiVersion 2.x
  * @NScriptType ClientScript
  * @NModuleScope SameAccount
+ * @name FB - Print PDF CS
+ * @version 1.0
+ * @author Dylan Mendoza <dylan.mendoza@freebug.mx>
+ * @summary This script will manage the user events of the print PDF button when the user clicks the button and open a new tab for showing PDF.
+ * @copyright Tekiio México 2023
+ * 
+ * Client              -> Healix
+ * Last modification   -> 31/05/2023
+ * Modified by         -> Dylan Mendoza <dylan.mendoza@freebug.mx>
+ * Script in NS        -> N/A <N/A>
  */
 define(['N/https', 'N/log', 'N/record', 'N/search', 'N/url', 'N/ui/message'],
 /**
@@ -161,7 +171,15 @@ function(https, log, record, search, url, message) {
     function renderButton(templateID, recordID) {
         try {
             if (templateID) {
-                
+                var urlResolve = url.resolveScript({
+                    scriptId: 'customscript_fb_print_pdf_invg_sl',
+                    deploymentId: 'customdeploy_fb_print_pdf_invg_sl',
+                    params: {
+                        templateID: templateID,
+                        recordID: recordID
+                    }
+                });
+                window.open(urlResolve, '_blank');
             }else{
                 var customMsg = message.create({
                     title: "Error",

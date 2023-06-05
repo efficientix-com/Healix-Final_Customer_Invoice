@@ -1,15 +1,27 @@
 /**
  * @NApiVersion 2.1
  * @NScriptType Suitelet
+ * @name FB - Print PDF SL
+ * @version 1.0
+ * @author Dylan Mendoza <dylan.mendoza@freebug.mx>
+ * @summary This script will generate and show the final PDF in the opened new tab.
+ * @copyright Tekiio México 2023
+ * 
+ * Client              -> Healix
+ * Last modification   -> 05/06/2023
+ * Modified by         -> Dylan Mendoza <dylan.mendoza@freebug.mx>
+ * Script in NS        -> FB - Print PDF SL <custscript_fb_print_pdf_invg_sl>
  */
-define(['N/log', 'N/record', 'N/render', 'N/search'],
+define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
     /**
  * @param{log} log
  * @param{record} record
  * @param{render} render
  * @param{search} search
+ * @param{runtime} runtime
+ * @param{file} file
  */
-    (log, record, render, search) => {
+    (log, record, render, search, runtime, file) => {
         /**
          * Defines the Suitelet script trigger point.
          * @param {Object} scriptContext
@@ -18,7 +30,433 @@ define(['N/log', 'N/record', 'N/render', 'N/search'],
          * @since 2015.2
          */
         const onRequest = (scriptContext) => {
+            var jsonRepsonse;
+            try {
+                var request = scriptContext.request;
+                var params = request.parameters;
+                var scriptObj = runtime.getCurrentScript();
+                log.debug('Remaining governance units start: ', scriptObj.getRemainingUsage());
+                var templateId = params.templateID;
+                var recordId = params.recordID;
+                log.debug({title:'DataReceived', details:{templateId: templateId, recordId: recordId}});
+                var generalInfoResult = getGeneralInformation(recordId);
+                log.debug({title:'generalInfoResult', details:generalInfoResult});
+                if (generalInfoResult.sucess) {
+                    var invoicesResult = getInfoInvoices(generalInfoResult.trans);
+                    log.debug({title:'invocesResult', details:invoicesResult});
+                    if (invoicesResult.sucess) {
+                        var ordenResult = groupInformation(invoicesResult.data);
+                        log.debug({title:'ordenResult', details:ordenResult});
+                        if (ordenResult.sucess) {
+                            log.debug({title:'Crear PDF', details:'Here'});
+                            var dataJsonResult = buildDataPDF(generalInfoResult.data, ordenResult.data, invoicesResult.data);
+                            log.debug({title:'dataJson', details:dataJsonResult});
+                            if (dataJsonResult.sucess) {
+                                var render_pdf = render.create();
+                                render_pdf.setTemplateById(templateId);
+                                var transactionFile = null;
+                                render_pdf.addCustomDataSource({format: render.DataSource.OBJECT, alias: "RECORD_PDF", data: dataJsonResult.data});
+                                transactionFile = render_pdf.renderAsPdf();
+                                scriptContext.response.writeFile({
+                                    file: transactionFile,
+                                    isInline: true
+                                });
+                            }else{
+                                jsonRepsonse = {'error': ordenResult.error};
+                                scriptContext.response.writeLine({
+                                    output: JSON.stringify(jsonRepsonse)
+                                }); 
+                            }
+                        }else{
+                            jsonRepsonse = {'error': ordenResult.error};
+                            scriptContext.response.writeLine({
+                                output: JSON.stringify(jsonRepsonse)
+                            });
+                        }
+                    }else{
+                        jsonRepsonse = {'error': invoicesResult.error};
+                        scriptContext.response.writeLine({
+                            output: JSON.stringify(jsonRepsonse)
+                        });
+                    }
+                }else{
+                    jsonRepsonse = {'error': generalInfoResult.error};
+                    scriptContext.response.writeLine({
+                        output: JSON.stringify(jsonRepsonse)
+                    });
+                }
+                log.debug('Remaining governance units final: ', scriptObj.getRemainingUsage());
+            } catch (error) {
+                log.error({title:'onRequest', details:error});
+                jsonRepsonse = {'error': 'Your template cannot be rendered, please check the advanced PDF format.'};
+                scriptContext.response.writeLine({
+                    output: JSON.stringify(jsonRepsonse)
+                });
+            }
+        }
 
+        function getGeneralInformation(recordId) {
+            var dataReturn = {sucess: false, error: '', data: '', trans: ''};
+            try {
+                var mySearch = search.create({
+                    type: search.Type.INVOICE_GROUP,
+                    filters:
+                    [
+                       ["internalid","anyof",recordId]
+                    ],
+                    columns:
+                    [
+                       search.createColumn({
+                          name: "internalid",
+                          summary: "GROUP",
+                          sort: search.Sort.ASC,
+                          label: "Internal ID"
+                       }),
+                       search.createColumn({
+                          name: "customer",
+                          summary: "GROUP",
+                          label: "Customer"
+                       }),
+                       search.createColumn({
+                          name: "internalid",
+                          join: "transaction",
+                          summary: "GROUP",
+                          label: "Internal ID"
+                       }),
+                       search.createColumn({
+                          name: "invoicegroupnumber",
+                          summary: "GROUP",
+                          label: "Invoice Group #"
+                       }),
+                       search.createColumn({
+                          name: "trandate",
+                          summary: "GROUP",
+                          label: "Date"
+                       }),
+                       search.createColumn({
+                          name: "fxamount",
+                          summary: "GROUP",
+                          label: "Amount (Foreign Currency)"
+                       }),
+                        search.createColumn({
+                            name: "billaddress",
+                            summary: "GROUP",
+                            label: "Billing Address"
+                        }),
+                        search.createColumn({
+                           name: "terms",
+                           summary: "GROUP",
+                           label: "Terms"
+                        }),
+                        search.createColumn({
+                           name: "duedate",
+                           summary: "GROUP",
+                           label: "Due Date"
+                        }),
+                        search.createColumn({
+                           name: "subsidiary",
+                           summary: "GROUP",
+                           label: "Subsidiary"
+                        }),
+                        search.createColumn({
+                           name: "currency",
+                           summary: "GROUP",
+                           label: "Currency"
+                        }),
+                        search.createColumn({
+                           name: "fxamountdue",
+                           summary: "GROUP",
+                           label: "Amount Due (Foreign Currency)"
+                        }),
+                        search.createColumn({
+                           name: "fxamountpaid",
+                           summary: "GROUP",
+                           label: "Amount Paid (Foreign Currency)"
+                        }),
+                        search.createColumn({
+                           name: "taxtotal",
+                           summary: "AVG",
+                           label: "Tax Total"
+                        }),
+                        search.createColumn({
+                           name: "shippingcost",
+                           summary: "AVG",
+                           label: "Shipping Cost"
+                        })
+                    ]
+                });
+                var myPagedData = mySearch.runPaged({
+                    pageSize: 1000
+                });
+                log.debug("invoicegroupSearchObj result count",myPagedData.count);
+                var transactionIds = [];
+                var docNum, cusName, date, total, transId, address, terms, dueDate, subsidiary, currency, dueAmount, paidAmount, taxAvg, shipAvg;
+                myPagedData.pageRanges.forEach(function(pageRange){
+                    var myPage = myPagedData.fetch({index: pageRange.index});
+                    myPage.data.forEach(function(result){
+                        docNum = result.getValue({
+                            name: "invoicegroupnumber",
+                            summary: "GROUP",
+                        });
+                        cusName = result.getText({
+                            name: "customer",
+                            summary: "GROUP",
+                        });
+                        date = result.getValue({
+                            name: "trandate",
+                            summary: "GROUP",
+                        });
+                        total = result.getValue({
+                            name: "fxamount",
+                            summary: "GROUP",
+                        });
+                        address = result.getValue({
+                            name: "billaddress",
+                            summary: "GROUP",
+                        });
+                        terms = result.getValue({
+                            name: "terms",
+                            summary: "GROUP",
+                        });
+                        dueDate = result.getValue({
+                            name: "duedate",
+                            summary: "GROUP",
+                        });
+                        subsidiary = result.getValue({
+                            name: "subsidiary",
+                            summary: "GROUP",
+                        });
+                        currency = result.getText({
+                            name: "currency",
+                            summary: "GROUP",
+                        });
+                        dueAmount = result.getValue({
+                            name: "fxamountdue",
+                            summary: "GROUP",
+                        });
+                        paidAmount = result.getValue({
+                            name: "fxamountpaid",
+                            summary: "GROUP",
+                        });
+                        taxAvg = result.getValue({
+                            name: "taxtotal",
+                            summary: "AVG"
+                        });
+                        shipAvg = result.getValue({
+                            name: "shippingcost",
+                            summary: "AVG"
+                        });
+                        transId = result.getValue({
+                            name: "internalid",
+                            join: "transaction",
+                            summary: "GROUP",
+                        });
+                        transactionIds.push(transId);
+                    });
+                });
+                var headerInfo = {docNum: docNum, cusName: cusName, date: date, total: total, 
+                    address: address, terms: terms, dueDate: dueDate, subsidiary: subsidiary, 
+                    currency: currency, dueAmount: dueAmount, paidAmount: paidAmount, subsidiary_logo: '', 
+                    subsidiary_adress: '', subsidiary_name: '', taxAvg: taxAvg, shipAvg: shipAvg};
+                log.debug({title:'DataFound', details: headerInfo});
+                log.debug({title:'transactionIds', details:transactionIds});
+                var subsidiary_record = record.load({
+                    type: record.Type.SUBSIDIARY,
+                    id: subsidiary
+                });
+                headerInfo.subsidiary_adress = subsidiary_record.getValue('mainaddress_text');
+                var subsidiary_logo_id = subsidiary_record.getValue('logo');
+                headerInfo.subsidiary_name = subsidiary_record.getValue('legalname');
+                if (subsidiary_logo_id) {
+                    var file_logo = file.load({id: subsidiary_logo_id});
+                    headerInfo.subsidiary_logo = file_logo.url;
+                } else {
+                    headerInfo.subsidiary_logo = '';
+                }
+                dataReturn.data = headerInfo;
+                dataReturn.trans = transactionIds;
+                dataReturn.sucess = true;
+            } catch (error) {
+                log.error({title:'getGeneralInformation', details:error});
+                dataReturn.sucess = false;
+                dataReturn.error = error;
+            }
+            return dataReturn;
+        }
+
+        function getInfoInvoices(invoices) {
+            var dataReturn = {sucess: false, error: '', data: ''}
+            try {
+                var invoiceSearchObj = search.create({
+                    type: "invoice",
+                    filters:
+                    [
+                       ["internalid","anyof",invoices], 
+                       "AND", 
+                       ["type","anyof","CustInvc"], 
+                       "AND", 
+                       ["mainline","is","F"], 
+                       "AND", 
+                       ["taxline","is","F"]
+                    ],
+                    columns:
+                    [
+                        search.createColumn({
+                            name: "internalid",
+                            sort: search.Sort.ASC,
+                            label: "Internal ID"
+                        }),
+                        search.createColumn({name: "tranid", label: "Document Number"}),
+                        search.createColumn({name: "item", label: "Artículo"}),
+                        search.createColumn({name: "quantityuom", label: "Cantidad en unidades de la transacción"}),
+                        search.createColumn({name: "unit", label: "Unidades"}),
+                        search.createColumn({name: "quantity", label: "Cantidad"}),
+                        search.createColumn({name: "amount", label: "Importe"}),
+                        search.createColumn({name: "taxamount", label: "Impuestos"}),
+                        search.createColumn({name: "taxtotal", label: "Total impuestos"}),
+                        search.createColumn({name: "total", label: "total transacción"}),
+                        search.createColumn({name: "trandate", label: "Date"}),
+                        search.createColumn({
+                            name: "class",
+                            join: "item",
+                            label: "Class"
+                         }),
+                        search.createColumn({name: "rate", label: "Rate 1"})
+                    ]
+                });
+                var myPagedData = invoiceSearchObj.runPaged({
+                    pageSize: 1000
+                });
+                log.debug({title:'ItemCount', details:myPagedData.count});
+                var allDataItems = {};
+                var lastInvoice = '';
+                myPagedData.pageRanges.forEach(function(pageRange){
+                    var myPage = myPagedData.fetch({index: pageRange.index});
+                    myPage.data.forEach(function(result){
+                        var invoiceId = result.getValue({name: 'internalid'});
+                        var invoiceNum = result.getValue({name: 'tranid'});
+                        var invoiceTotal = result.getValue({name: 'total'});
+                        var invoiceImp = result.getValue({name: 'taxtotal'});
+                        var invoiceDate = result.getValue({name: 'trandate'});
+                        var itemId = result.getValue({name: 'item'});
+                        var itemName = result.getText({name: 'item'});
+                        var itemQuanTotal = result.getValue({name: 'quantity'});
+                        var itemQuan = result.getValue({name: 'quantityuom'});
+                        var itemUnit = result.getValue({name: 'unit'});
+                        var itemAmoun = result.getValue({name: 'amount'});
+                        var itemImpu = result.getValue({name: 'taxamount'});
+                        var itemRate = result.getValue({name: 'rate'});
+                        var itemCategory = result.getText({
+                            name: "class",
+                            join: "item"
+                        }) || 'Without category';
+                        // if (itemId != 10009 && itemId != 10108) {
+                        //     itemCategory = 2;
+                        // }
+                        // if (itemId == 10109 || itemId == 10017) {
+                        //     itemCategory = 4;
+                        // }
+                        if (lastInvoice != invoiceId) {
+                            lastInvoice = invoiceId
+                            allDataItems[invoiceId] = {invoiceId: invoiceId, invoiceNum: invoiceNum, invoiceTotal: invoiceTotal, invoiceImp: invoiceImp, invoiceDate: invoiceDate, items: []};
+                            allDataItems[invoiceId].items.push({itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate});
+                        }else{
+                            allDataItems[invoiceId].items.push({itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate});
+                        }
+                    });
+                });
+                dataReturn.sucess = true;
+                dataReturn.data = allDataItems;
+            } catch (error) {
+                log.error({title:'getInfoInvoices', details:error});
+                dataReturn.sucess = false;
+                dataReturn.error = 'It was not possible to obtain the data of the invoices.';
+            }
+            return dataReturn;
+        }
+
+        function groupInformation(info) {
+            var dataReturn = {sucess: false, error: '', data: ''};
+            try {
+                // log.debug({title:'info', details:info});
+                var invoiceIds = Object.keys(info);
+                var dataItems = {};
+                // log.debug({title:'invoiceIds', details:invoiceIds});
+                for (var transIter = 0; transIter < invoiceIds.length; transIter++) {
+                    var invoiceId = invoiceIds[transIter];
+                    // log.debug({title:'transIter: ' + transIter, details:info[invoiceId]});
+                    for (var itemIter = 0; itemIter < info[invoiceId].items.length; itemIter++) {
+                        var itemData = info[invoiceId].items[itemIter];
+                        // log.debug({title:'itemIter: ' + itemIter, details:itemData});
+                        // log.debug({title:'idItem', details:itemData.itemId});
+                        if (dataItems[itemData.itemId]) {
+                            var oldAmount = Number(dataItems[itemData.itemId].itemAmoun);
+                            var sumAmount = Number(itemData.itemAmoun);
+                            var newAmount = oldAmount + sumAmount;
+                            var oldCant = Number(dataItems[itemData.itemId].itemQuanTotal);
+                            var sumCant = Number(itemData.itemQuanTotal);
+                            var newCant = Number(oldCant + sumCant);
+                            // log.debug({title:'Ya existe el item sumar', details:{oldAmount: oldAmount, sumAmount: sumAmount, newAmount: newAmount}});
+                            dataItems[itemData.itemId].itemAmoun = newAmount;
+                            dataItems[itemData.itemId].itemQuanTotal = newCant;
+                        }else{
+                            // log.debug({title:'No existe el item', details:'Agregar item'});
+                            dataItems[itemData.itemId] = itemData;
+                        }
+                    }
+                }
+                // log.debug({title:'dataItems', details:dataItems});
+                var groupInfo = {};
+                var itemsIds = Object.keys(dataItems)
+                for (var itemLine = 0; itemLine < itemsIds.length; itemLine++) {
+                    var itemInfo = dataItems[itemsIds[itemLine]];
+                    if (groupInfo[itemInfo.itemCategory]) {
+                        log.debug({title:'Existe el grupo de esa categoria', details:'Existe categoria: ' + itemInfo.itemCategory});
+                        groupInfo[itemInfo.itemCategory].push(itemInfo);
+                    }else{
+                        log.debug({title:'NO Existe el grupo de esa categoria', details:'agregar categoria: ' + itemInfo.itemCategory});
+                        groupInfo[itemInfo.itemCategory] = [itemInfo];
+                    }
+                }
+                dataReturn.sucess = true;
+                dataReturn.data = groupInfo;
+            } catch (error) {
+                log.error({title:'groupInformation', details:error});
+                dataReturn.sucess = false;
+                dataReturn.error = 'Error sorting data.';
+            }
+            return dataReturn;
+        }
+
+        function buildDataPDF(generalInfo, itemsInfo, invoiceInfo) {
+            var dataReturn = {sucess: false, error: '', data: ''};
+            try {
+                log.debug({title:'generalInfo', details:generalInfo});
+                log.debug({title:'itemsInfo', details:itemsInfo});
+                log.debug({title:'invoiceInfo', details:invoiceInfo});
+                var datosJson = generalInfo;
+                datosJson.invoices = [];
+                var invoicesIds = Object.keys(invoiceInfo);
+                for (var index = 0; index < invoicesIds.length; index++) {
+                    var dataInvoice = invoiceInfo[invoicesIds[index]];
+                    datosJson.invoices.push({docNum: dataInvoice.invoiceNum, total: dataInvoice.invoiceTotal, date: dataInvoice.invoiceDate});
+                }
+                datosJson.items = [];
+                var itemsIds = Object.keys(itemsInfo);
+                for (var index = 0; index < itemsIds.length; index++) {
+                    var categoryInfo = itemsInfo[itemsIds[index]];
+                    for (var lineCate = 0; lineCate < categoryInfo.length; lineCate++) {
+                        datosJson.items.push(categoryInfo[lineCate]);
+                    }
+                }
+                dataReturn.sucess = true;
+                dataReturn.data = datosJson;
+            } catch (error) {
+                log.error({title:'buildDataPDF', details:error});
+                dataReturn.sucess = false;
+                dataReturn.error = error;
+            }
+            return dataReturn;
         }
 
         return {onRequest}
