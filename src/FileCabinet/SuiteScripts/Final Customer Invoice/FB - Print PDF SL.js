@@ -509,18 +509,10 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file', 'N/f
                             var newCant = Number(oldCant + sumCant);
                             // log.debug({title:'Ya existe el item sumar', details:{oldAmount: oldAmount, sumAmount: sumAmount, newAmount: newAmount}});
                             dataItems[itemData.itemId].itemAmoun = newAmount;
-                            // dataItems[itemData.itemId].itemAmoun = format.format({
-                            //     value: newAmount,
-                            //     type: format.Type.CURRENCY2
-                            // });
                             dataItems[itemData.itemId].itemQuan = newCant;
                         }else{
                             // log.debug({title:'No existe el item', details:'Agregar item'});
                             dataItems[itemData.itemId] = itemData;
-                            // dataItems[itemData.itemId].itemAmoun = format.format({
-                            //     value: dataItems[itemData.itemId].itemAmoun,
-                            //     type: format.Type.CURRENCY2
-                            // });
                         }
                     }
                 }
