@@ -8,7 +8,7 @@
  * @copyright Tekiio México 2023
  * 
  * Client              -> Healix
- * Last modification   -> 05/06/2023
+ * Last modification   -> 06/06/2023
  * Modified by         -> Dylan Mendoza <dylan.mendoza@freebug.mx>
  * Script in NS        -> FB - Print PDF SL <custscript_fb_print_pdf_invg_sl>
  */
