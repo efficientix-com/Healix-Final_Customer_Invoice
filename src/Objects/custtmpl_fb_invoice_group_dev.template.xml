@@ -20,7 +20,10 @@
 						<tr>
 							<td rowspan="3" style="padding: 0px; width: 66.66.33%;">
 							<#if RECORD_PDF.subsidiary_logo?has_content>
-								<img src="${companyInformation.logoUrl}"  style="float: left; margin: 7px" width="175" height="55"/>
+								<#assign x = RECORD_PDF.subsidiary_logo>
+								<#escape x as x?html>
+									<img src="${x}"  style="float: left; margin: 7px" width="175" height="55"/>
+								</#escape>
 							</#if>
 							<span class="nameandaddress" style="font-size: 8pt;">${RECORD_PDF.subsidiary_adress}</span></td>
 							<td align="right" style="width: 33.33%;"><span class="title">Invoice</span></td>

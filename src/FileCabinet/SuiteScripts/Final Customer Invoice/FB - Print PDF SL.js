@@ -440,7 +440,7 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file', 'N/f
                         var itemAmoun = result.getValue({name: 'amount'});
                         var itemImpu = result.getValue({name: 'taxamount'});
                         var itemRate = result.getValue({name: 'rate'});
-                        itemRate = Number(itemAmoun/itemQuan);
+                        itemRate = Number(itemAmoun)/Number(itemQuan);
                         itemRate = format.format({
                             value: itemRate,
                             type: format.Type.CURRENCY2
@@ -449,18 +449,15 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file', 'N/f
                             name: "class",
                             join: "item"
                         }) || 'Without category';
-                        // if (itemId != 10009 && itemId != 10108) {
-                        //     itemCategory = 2;
-                        // }
-                        // if (itemId == 10109 || itemId == 10017) {
-                        //     itemCategory = 4;
-                        // }
-                        if (lastInvoice != invoiceId) {
-                            lastInvoice = invoiceId
-                            allDataItems[invoiceId] = {invoiceId: invoiceId, invoiceNum: invoiceNum, invoiceTotal: invoiceTotal, invoiceImp: invoiceImp, invoiceDate: invoiceDate, items: []};
-                            allDataItems[invoiceId].items.push({itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate});
-                        }else{
-                            allDataItems[invoiceId].items.push({itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate});
+                        if (itemUnit != '') {
+                            // log.debug({title:'Items Push', details:{itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate}});
+                            if (lastInvoice != invoiceId) {
+                                lastInvoice = invoiceId
+                                allDataItems[invoiceId] = {invoiceId: invoiceId, invoiceNum: invoiceNum, invoiceTotal: invoiceTotal, invoiceImp: invoiceImp, invoiceDate: invoiceDate, items: []};
+                                allDataItems[invoiceId].items.push({itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate});
+                            }else{
+                                allDataItems[invoiceId].items.push({itemId: itemId, itemName: itemName, itemQuan: itemQuan, itemUnit: itemUnit, itemQuanTotal: itemQuanTotal, itemAmoun: itemAmoun, itemImpu: itemImpu, itemCategory: itemCategory, itemRate: itemRate});
+                            }
                         }
                     });
                 });
@@ -500,39 +497,51 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file', 'N/f
                         // log.debug({title:'itemIter: ' + itemIter, details:itemData});
                         // log.debug({title:'idItem', details:itemData.itemId});
                         if (dataItems[itemData.itemId]) {
+                            // log.debug({title:'daaExistente', details:dataItems[itemData.itemId]});
+                            // log.debug({title:'dataItem', details:dataItems[itemData.itemId].itemAmoun});
+                            // log.debug({title:'itemData', details:itemData.itemAmoun});
                             var oldAmount = Number(dataItems[itemData.itemId].itemAmoun);
                             var sumAmount = Number(itemData.itemAmoun);
-                            var newAmount = oldAmount + sumAmount;
+                            // log.debug({title:'dataSum', details:{oldAmount:oldAmount, sumAmount:sumAmount}});
+                            var newAmount = (oldAmount) + (sumAmount);
                             var oldCant = Number(dataItems[itemData.itemId].itemQuan);
                             var sumCant = Number(itemData.itemQuan);
                             var newCant = Number(oldCant + sumCant);
                             // log.debug({title:'Ya existe el item sumar', details:{oldAmount: oldAmount, sumAmount: sumAmount, newAmount: newAmount}});
-                            // dataItems[itemData.itemId].itemAmoun = newAmount;
-                            dataItems[itemData.itemId].itemAmoun = format.format({
-                                value: newAmount,
-                                type: format.Type.CURRENCY2
-                            });
+                            dataItems[itemData.itemId].itemAmoun = newAmount;
+                            // dataItems[itemData.itemId].itemAmoun = format.format({
+                            //     value: newAmount,
+                            //     type: format.Type.CURRENCY2
+                            // });
                             dataItems[itemData.itemId].itemQuan = newCant;
                         }else{
                             // log.debug({title:'No existe el item', details:'Agregar item'});
                             dataItems[itemData.itemId] = itemData;
-                            dataItems[itemData.itemId].itemAmoun = format.format({
-                                value: dataItems[itemData.itemId].itemAmoun,
-                                type: format.Type.CURRENCY2
-                            });
+                            // dataItems[itemData.itemId].itemAmoun = format.format({
+                            //     value: dataItems[itemData.itemId].itemAmoun,
+                            //     type: format.Type.CURRENCY2
+                            // });
                         }
                     }
                 }
-                // log.debug({title:'dataItems', details:dataItems});
+                log.debug({title:'dataItems', details:dataItems});
                 var groupInfo = {};
-                var itemsIds = Object.keys(dataItems)
+                var itemsIds = Object.keys(dataItems);
+                for (var itemLine = 0; itemLine < itemsIds.length; itemLine++) {
+                    var itemData = dataItems[itemsIds[itemLine]].itemAmoun;
+                    itemData = format.format({
+                        value: itemData,
+                        type: format.Type.CURRENCY2
+                    });
+                    dataItems[itemsIds[itemLine]].itemAmoun = itemData;
+                }
                 for (var itemLine = 0; itemLine < itemsIds.length; itemLine++) {
                     var itemInfo = dataItems[itemsIds[itemLine]];
                     if (groupInfo[itemInfo.itemCategory]) {
-                        log.debug({title:'Existe el grupo de esa categoria', details:'Existe categoria: ' + itemInfo.itemCategory});
+                        // log.debug({title:'Existe el grupo de esa categoria', details:'Existe categoria: ' + itemInfo.itemCategory});
                         groupInfo[itemInfo.itemCategory].push(itemInfo);
                     }else{
-                        log.debug({title:'NO Existe el grupo de esa categoria', details:'agregar categoria: ' + itemInfo.itemCategory});
+                        // log.debug({title:'NO Existe el grupo de esa categoria', details:'agregar categoria: ' + itemInfo.itemCategory});
                         groupInfo[itemInfo.itemCategory] = [itemInfo];
                     }
                 }
