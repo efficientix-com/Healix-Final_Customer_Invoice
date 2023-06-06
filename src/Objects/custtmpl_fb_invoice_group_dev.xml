@@ -2,7 +2,7 @@
   <description></description>
   <displaysourcecode>T</displaysourcecode>
   <isinactive>F</isinactive>
-  <preferred>T</preferred>
+  <preferred>F</preferred>
   <printtype>INVOICEGROUP</printtype>
   <title>Healix - Invoice Group Dev</title>
   <trantype>CUSTINVC</trantype>

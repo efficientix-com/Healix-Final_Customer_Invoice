@@ -12,7 +12,7 @@
  * Modified by         -> Dylan Mendoza <dylan.mendoza@freebug.mx>
  * Script in NS        -> FB - Print PDF SL <custscript_fb_print_pdf_invg_sl>
  */
-define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
+define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file', 'N/format', 'N/url'],
     /**
  * @param{log} log
  * @param{record} record
@@ -21,7 +21,7 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
  * @param{runtime} runtime
  * @param{file} file
  */
-    (log, record, render, search, runtime, file) => {
+    (log, record, render, search, runtime, file, format, url) => {
         /**
          * Defines the Suitelet script trigger point.
          * @param {Object} scriptContext
@@ -192,7 +192,22 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                            name: "shippingcost",
                            summary: "AVG",
                            label: "Shipping Cost"
-                        })
+                        }),
+                        search.createColumn({
+                            name: "itemtotal",
+                            summary: "AVG",
+                            label: "Item Total"
+                         }),
+                         search.createColumn({
+                            name: "ponumber",
+                            summary: "GROUP",
+                            label: "Purchase Order Number"
+                         }),
+                         search.createColumn({
+                            name: "memo",
+                            summary: "GROUP",
+                            label: "Memo"
+                         })
                     ]
                 });
                 var myPagedData = mySearch.runPaged({
@@ -200,14 +215,32 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                 });
                 log.debug("invoicegroupSearchObj result count",myPagedData.count);
                 var transactionIds = [];
-                var docNum, cusName, date, total, transId, address, terms, dueDate, subsidiary, currency, dueAmount, paidAmount, taxAvg, shipAvg;
+                var docNum, poNum, cusName, memo, date, total, transId, address, terms, dueDate, subsidiary, currency, dueAmount, paidAmount, taxAvg, itemAvg, idDocNum;
                 myPagedData.pageRanges.forEach(function(pageRange){
                     var myPage = myPagedData.fetch({index: pageRange.index});
                     myPage.data.forEach(function(result){
+                        idDocNum = result.getValue({
+                            name: "internalid",
+                            summary: "GROUP"
+                        });
                         docNum = result.getValue({
                             name: "invoicegroupnumber",
                             summary: "GROUP",
                         });
+                        poNum = result.getValue({
+                            name: "ponumber",
+                            summary: "GROUP"
+                        });
+                        if (poNum == '- None -') {
+                            poNum = ''
+                        }
+                        memo = result.getValue({
+                            name: "memo",
+                            summary: "GROUP"
+                        });
+                        if (memo == '- None -') {
+                            memo = ''
+                        }
                         cusName = result.getText({
                             name: "customer",
                             summary: "GROUP",
@@ -220,10 +253,17 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                             name: "fxamount",
                             summary: "GROUP",
                         });
+                        total = format.format({
+                            value: total,
+                            type: format.Type.CURRENCY2
+                        });
                         address = result.getValue({
                             name: "billaddress",
                             summary: "GROUP",
                         });
+                        if (address == '- None -') {
+                            address = ''
+                        }
                         terms = result.getValue({
                             name: "terms",
                             summary: "GROUP",
@@ -244,17 +284,33 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                             name: "fxamountdue",
                             summary: "GROUP",
                         });
+                        dueAmount = format.format({
+                            value: dueAmount,
+                            type: format.Type.CURRENCY2
+                        });
                         paidAmount = result.getValue({
                             name: "fxamountpaid",
                             summary: "GROUP",
+                        });
+                        paidAmount = format.format({
+                            value: paidAmount,
+                            type: format.Type.CURRENCY2
                         });
                         taxAvg = result.getValue({
                             name: "taxtotal",
                             summary: "AVG"
                         });
-                        shipAvg = result.getValue({
-                            name: "shippingcost",
-                            summary: "AVG"
+                        taxAvg = format.format({
+                            value: taxAvg,
+                            type: format.Type.CURRENCY2
+                        });
+                        itemAvg = result.getValue({
+                            name: "itemtotal",
+                            summary: "AVG",
+                        });
+                        itemAvg = format.format({
+                            value: itemAvg,
+                            type: format.Type.CURRENCY2
                         });
                         transId = result.getValue({
                             name: "internalid",
@@ -264,10 +320,10 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                         transactionIds.push(transId);
                     });
                 });
-                var headerInfo = {docNum: docNum, cusName: cusName, date: date, total: total, 
+                var headerInfo = {docNum: docNum, idDocNum: idDocNum, poNum: poNum, memo: memo, cusName: cusName, date: date, total: total, 
                     address: address, terms: terms, dueDate: dueDate, subsidiary: subsidiary, 
                     currency: currency, dueAmount: dueAmount, paidAmount: paidAmount, subsidiary_logo: '', 
-                    subsidiary_adress: '', subsidiary_name: '', taxAvg: taxAvg, shipAvg: shipAvg};
+                    subsidiary_adress: '', subsidiary_name: '', taxAvg: taxAvg, itemAvg: itemAvg};
                 log.debug({title:'DataFound', details: headerInfo});
                 log.debug({title:'transactionIds', details:transactionIds});
                 var subsidiary_record = record.load({
@@ -279,7 +335,14 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                 headerInfo.subsidiary_name = subsidiary_record.getValue('legalname');
                 if (subsidiary_logo_id) {
                     var file_logo = file.load({id: subsidiary_logo_id});
-                    headerInfo.subsidiary_logo = file_logo.url;
+                    var subsidiary_logo = file_logo.url;
+                    // headerInfo.subsidiary_logo = file_logo.url;
+                    var scheme = 'https://';
+                    var host = url.resolveDomain({
+                        hostType: url.HostType.APPLICATION
+                    });
+                    var urlFinal = scheme + host + subsidiary_logo;
+                    headerInfo.subsidiary_logo = urlFinal;
                 } else {
                     headerInfo.subsidiary_logo = '';
                 }
@@ -342,7 +405,12 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                             join: "item",
                             label: "Class"
                          }),
-                        search.createColumn({name: "rate", label: "Rate 1"})
+                        search.createColumn({name: "rate", label: "Rate 1"}),
+                        search.createColumn({
+                            name: "displayname",
+                            join: "item",
+                            label: "Name item"
+                         })
                     ]
                 });
                 var myPagedData = invoiceSearchObj.runPaged({
@@ -361,12 +429,22 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                         var invoiceDate = result.getValue({name: 'trandate'});
                         var itemId = result.getValue({name: 'item'});
                         var itemName = result.getText({name: 'item'});
+                        var itemDisplayName = result.getValue({
+                            name: "displayname",
+                            join: "item",
+                        });
+                        itemName = itemName+' '+itemDisplayName;
                         var itemQuanTotal = result.getValue({name: 'quantity'});
                         var itemQuan = result.getValue({name: 'quantityuom'});
                         var itemUnit = result.getValue({name: 'unit'});
                         var itemAmoun = result.getValue({name: 'amount'});
                         var itemImpu = result.getValue({name: 'taxamount'});
                         var itemRate = result.getValue({name: 'rate'});
+                        itemRate = Number(itemAmoun/itemQuan);
+                        itemRate = format.format({
+                            value: itemRate,
+                            type: format.Type.CURRENCY2
+                        });
                         var itemCategory = result.getText({
                             name: "class",
                             join: "item"
@@ -425,15 +503,23 @@ define(['N/log', 'N/record', 'N/render', 'N/search', 'N/runtime', 'N/file'],
                             var oldAmount = Number(dataItems[itemData.itemId].itemAmoun);
                             var sumAmount = Number(itemData.itemAmoun);
                             var newAmount = oldAmount + sumAmount;
-                            var oldCant = Number(dataItems[itemData.itemId].itemQuanTotal);
-                            var sumCant = Number(itemData.itemQuanTotal);
+                            var oldCant = Number(dataItems[itemData.itemId].itemQuan);
+                            var sumCant = Number(itemData.itemQuan);
                             var newCant = Number(oldCant + sumCant);
                             // log.debug({title:'Ya existe el item sumar', details:{oldAmount: oldAmount, sumAmount: sumAmount, newAmount: newAmount}});
-                            dataItems[itemData.itemId].itemAmoun = newAmount;
-                            dataItems[itemData.itemId].itemQuanTotal = newCant;
+                            // dataItems[itemData.itemId].itemAmoun = newAmount;
+                            dataItems[itemData.itemId].itemAmoun = format.format({
+                                value: newAmount,
+                                type: format.Type.CURRENCY2
+                            });
+                            dataItems[itemData.itemId].itemQuan = newCant;
                         }else{
                             // log.debug({title:'No existe el item', details:'Agregar item'});
                             dataItems[itemData.itemId] = itemData;
+                            dataItems[itemData.itemId].itemAmoun = format.format({
+                                value: dataItems[itemData.itemId].itemAmoun,
+                                type: format.Type.CURRENCY2
+                            });
                         }
                     }
                 }

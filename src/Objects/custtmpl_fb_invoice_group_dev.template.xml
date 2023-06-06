@@ -1,295 +1,229 @@
 <?xml version="1.0"?><!DOCTYPE pdf PUBLIC "-//big.faceless.org//report" "report-1.1.dtd">
 <pdf>
-	<#if RECORD_PDF?has_content>
-		<head>
-			<link name="NotoSans" type="font" subtype="truetype" src="${nsfont.NotoSans_Regular}" src-bold="${nsfont.NotoSans_Bold}" src-italic="${nsfont.NotoSans_Italic}" src-bolditalic="${nsfont.NotoSans_BoldItalic}" bytes="2" />
-			<#if .locale == "zh_CN">
-				<link name="NotoSansCJKsc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKsc_Regular}" src-bold="${nsfont.NotoSansCJKsc_Bold}" bytes="2" />
-			<#elseif .locale == "zh_TW">
-				<link name="NotoSansCJKtc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKtc_Regular}" src-bold="${nsfont.NotoSansCJKtc_Bold}" bytes="2" />
-			<#elseif .locale == "ja_JP">
-				<link name="NotoSansCJKjp" type="font" subtype="opentype" src="${nsfont.NotoSansCJKjp_Regular}" src-bold="${nsfont.NotoSansCJKjp_Bold}" bytes="2" />
-			<#elseif .locale == "ko_KR">
-				<link name="NotoSansCJKkr" type="font" subtype="opentype" src="${nsfont.NotoSansCJKkr_Regular}" src-bold="${nsfont.NotoSansCJKkr_Bold}" bytes="2" />
-			<#elseif .locale == "th_TH">
-				<link name="NotoSansThai" type="font" subtype="opentype" src="${nsfont.NotoSansThai_Regular}" src-bold="${nsfont.NotoSansThai_Bold}" bytes="2" />
-			</#if>
-			<macrolist>
-				<macro id="nlheader">
-					<table class="header" style="width: 100%;">
-						<tr>
-							<td rowspan="3" style="padding: 0px; width: 34%;"><#if companyInformation.logoUrl?length != 0><img src="${companyInformation.logoUrl}" style="float: left; margin: 7px" width="210" height="40" /> </#if> <span class="nameandaddress" style="font-size: 9pt;">${companyInformation.addressText}</span></td>
-							<td align="right"><span class="title">Invoice Group</span></td>
-						</tr>
-						<tr>
-							<#assign docNum = RECORD_PDF.docNum>
-							<td align="right"><span class="number">#${docNum}</span></td>
-						</tr>
-						<tr>
-							<td align="right">${RECORD_PDF.date}</td>
-						</tr>
-					</table>
-				</macro>
-			</macrolist>
-			<style type="text/css">* {
-				<#if .locale == "zh_CN">
-					font-family: NotoSans, NotoSansCJKsc, sans-serif;
-				<#elseif .locale == "zh_TW">
-					font-family: NotoSans, NotoSansCJKtc, sans-serif;
-				<#elseif .locale == "ja_JP">
-					font-family: NotoSans, NotoSansCJKjp, sans-serif;
-				<#elseif .locale == "ko_KR">
-					font-family: NotoSans, NotoSansCJKkr, sans-serif;
-				<#elseif .locale == "th_TH">
-					font-family: NotoSans, NotoSansThai, sans-serif;
-				<#else>
-					font-family: NotoSans, sans-serif;
-				</#if>
-				}
-				table {
-					font-size: 9pt;
-					table-layout: fixed;
-				}
-				th {
-					font-weight: bold;
-					font-size: 8pt;
-					vertical-align: middle;
-					padding: 5px 6px 3px;
-					background-color: #2D5EA8;
-					color: #ffffff;
-				}
-				td {
-					padding: 4px 6px;
-				}
-				td p { align:left }
-				b {
-					font-weight: bold;
-					color: #333333;
-				}
-				table.header td {
-					padding: 0px;
-					font-size: 10pt;
-				}
-				table.footer td {
-					padding: 0px;
-					font-size: 8pt;
-				}
-				table.itemtable th {
-					padding-bottom: 5px;
-					padding-top: 5px;
-				}
-				table.body td {
-					padding-top: 2px;
-				}
-				table.total {
-					page-break-inside: avoid;
-				}
-				tr.totalrow {
-					background-color: #e3e3e3;
-					line-height: 200%;
-				}
-				td.totalboxtop {
-					font-size: 12pt;
-					background-color: #e3e3e3;
-				}
-				td.addressheader {
-					font-size: 10pt;
-					padding-top: 6px;
-					padding-bottom: 2px;
-				}
-				td.address {
-					padding-top: 0px;
-				}
-				td.totalboxmid {
-					font-size: 22pt;
-					padding-top: 20px;
-					background-color: #e3e3e3;
-				}
-				td.totalboxbot {
-					background-color: #e3e3e3;
-					font-weight: bold;
-				}
-				span.title {
-					font-size: 22pt;
-				}
-				span.number {
-					font-size: 14pt;
-				color: #ce0000;
-				}
-				span.itemname {
-					font-weight: bold;
-					line-height: 150%;
-				}
-				hr {
-					width: 100%;
-					color: #d3d3d3;
-					background-color: #d3d3d3;
-					height: 1px;
-				}
-			</style>  
-		</head>
-		<body header="nlheader" header-height="10%" padding="0.5in 0.5in 0.5in 0.5in" size="Letter">
-			<table style="width: 677px;">
-				<tr>
-					<td colspan="5" style="width: 196px;">
-						<table>
-							<tr>
-								<td class="addressheader" colspan="5"><b>Bill Address</b></td>
-								<td class="addressheader" colspan="4"><b>${record.shipaddress@label}</b></td>
-							</tr>
-							<tr>
-								<td class="address" colspan="5"> ${RECORD_PDF.address}</td>
-								<td class="address" colspan="4" rowspan="2">${record.shipaddress}</td>
-							</tr>
-						</table>
-					</td>
-					<td align="right" colspan="6" style="width: 471px;">
-						<table style="break-inside: avoid; margin-top: 10px;">
-							<tr style="">
-								<td align="left" style="background-color: #d3d3d3; width: 100; font-size: 10pt;" ><b>Amount Paid</b></td>
-								<td align="right" style="width: 90; font-size: 10pt;">$${RECORD_PDF.paidAmount}</td>
-							</tr>
-							<tr style="">
-								<td align="left" style="background-color: #d3d3d3; width: 100;  font-size: 10pt;" ><b>Amount Due</b></td>
-								<td align="right" style="width: 90; font-size: 10pt;">$${RECORD_PDF.dueAmount}</td>
-							</tr>
-							<tr style=" ">
-								<td align="left" style="background-color: #d3d3d3; width: 100; font-size: 10pt;" ><b>Total Amount</b></td>
-								<td align="right" style="width: 90; font-size: 10pt;">$${RECORD_PDF.total}</td>
-							</tr>
-						</table>
-					</td>
-				</tr>
-			</table>
-
-			<table style="width: 100%; margin-top: 10px;">
-				<tr>
-					<td ></td>
-				</tr>
-			</table>
-
-			<table style="break-inside: avoid; margin-top: 10px; width: 677px;">
-				<tr style="">
-					<td align="left" style="fonts-size: 12pt;"><strong>Primary Information</strong></td>
-				</tr>
-			</table>
-
-			<table class="body" style="width: 100%; margin-top: 10px;">
-				<tr style="background-color: #d3d3d3; ">
-					<th align="center" width="150pt">Customer</th>
-					<th align="center"  width="160pt">Transaction Date</th>
-					<th align="center"  width="140pt">Terms</th>
-					<th align="center" width="150pt">Due Date</th>
-					<th align="center" width="200pt">Subsidiary</th>
-					<th align="center" width="150pt">Currency</th>
-				</tr>
-				<tr>
-					<td align="center" >${RECORD_PDF.cusName}</td>
-					<td align="center" >${RECORD_PDF.date}</td>
-					<td align="center" >${RECORD_PDF.terms}</td>
-					<td align="center" >${RECORD_PDF.dueDate}</td>
-					<td align="center" >${RECORD_PDF.subsidiary_name}</td>
-					<td align="center" >${RECORD_PDF.currency}</td>
-				</tr>
-			</table>
-			
-			<#if RECORD_PDF.invoices?has_content>
-			<table style="break-inside: avoid; margin-top: 10px; width: 677px;">
-				<tr style="">
-					<td align="left"><strong>Invoice Group Summary</strong></td>
-				</tr>
-			</table>
-
-			<table style="width: 100%; margin-top: 10px;">
-				<#list RECORD_PDF.invoices as invoice_summary>
-					<#if invoice_summary_index==0>
-						<thead>
-							<tr style="background-color: #2D5EA8; color: #fff;">
-								<td align="center" colspan="4" >Invoice Number</td>
-								<td align="center" colspan="3" >Invoice Date</td>
-								<td align="center" colspan="3" >Amount</td>
-							</tr>
-						</thead>
-					</#if>
-					<tr>
-						<td align="left" colspan="4" >${invoice_summary.docNum}</td>
-						<td align="center" colspan="3" >${invoice_summary.date}</td>
-						<td align="right" colspan="3" >$${invoice_summary.total}</td>
-					</tr>
-				</#list>
-			</table>
-			</#if>
-
-			<#if RECORD_PDF.items?has_content>
-
-				<table style="break-inside: avoid; margin-top: 10px; width: 647px;">
-					<tr style="">
-						<td align="left"><strong>Invoice Group Detail</strong></td>
-					</tr>
-				</table>
-
-				<table style="width=100%; margin-top: 10px;margin-bottom: 0px; ">
-					<#assign categoryGroup = '0'>
-					<#list RECORD_PDF.items as item>
-						<#if item_index==0>
-							<thead>
-								<tr style="background-color: #2D5EA8; color: #fff; ">
-									<th align="center" width="80pt">Seq Num</th>
-									<th align="center"  width="130pt">Item</th>
-									<th align="center" width="100pt">Item Rate</th>
-									<th align="center" width="70pt">Quantity</th>
-									<th align="center" width="150pt">Gross Amount</th>
-								</tr>
-							</thead>
-							<#assign categoryGroup = item.itemCategory>
-							<tr>
-								<td align="left" colspan="2"><b>Category: ${categoryGroup}</b></td>
-							</tr>
-						</#if>
-						<#assign category = item.itemCategory>
-						<#if categoryGroup!=category>
-							<#assign categoryGroup = item.itemCategory>
-							<tr>
-								<td align="left" colspan="2"><b>Category: ${categoryGroup}</b></td>
-							</tr>
-						</#if>
-						<tr>
-							<td align="left" >${item_index+1}</td>
-							<td align="center" >${item.itemName}</td>
-							<td align="right" >$${item.itemRate}</td>
-							<td align="center" >${item.itemQuanTotal}</td>
-							<td align="right" >$${item.itemAmoun}</td>
-						</tr>
-					</#list>
-				</table>
-				<hr />
-				<table style="break-inside: avoid; margin-top: 10px; width: 677px;">
-					<tr style=" ">
-						<td></td>
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td style="border-right: 0px solid;">&nbsp;</td>
-						<td align="left" style="background-color: #d3d3d3; font-weight: bold; width: 140px;">Tax Total</td>
-						<td align="right" style="width: 100px;">$${RECORD_PDF.taxAvg}</td>
-					</tr>
-					<tr style=" ">
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td style="border-right: 0px solid;">&nbsp;</td>
-						<td align="left" style="background-color: #d3d3d3;font-weight: bold; width: 140px;">Shipping Cost</td>
-						<td align="right" style="width: 100px;">$${RECORD_PDF.shipAvg}</td>
-					</tr>
-					<tr style=" ">
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td>&nbsp;</td>
-						<td style="border-right: 0px solid;">&nbsp;</td>
-						<td align="left" style="background-color: #d3d3d3; font-weight: bold;width: 140px;">Total Amount</td>
-						<td align="right" style="width: 100px;">$${RECORD_PDF.total}</td>
-					</tr>
-				</table>
-			</#if>
-		</body>
+<head>
+	<link name="NotoSans" type="font" subtype="truetype" src="${nsfont.NotoSans_Regular}" src-bold="${nsfont.NotoSans_Bold}" src-italic="${nsfont.NotoSans_Italic}" src-bolditalic="${nsfont.NotoSans_BoldItalic}" bytes="2" />
+	<#if .locale == "zh_CN">
+		<link name="NotoSansCJKsc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKsc_Regular}" src-bold="${nsfont.NotoSansCJKsc_Bold}" bytes="2" />
+	<#elseif .locale == "zh_TW">
+		<link name="NotoSansCJKtc" type="font" subtype="opentype" src="${nsfont.NotoSansCJKtc_Regular}" src-bold="${nsfont.NotoSansCJKtc_Bold}" bytes="2" />
+	<#elseif .locale == "ja_JP">
+		<link name="NotoSansCJKjp" type="font" subtype="opentype" src="${nsfont.NotoSansCJKjp_Regular}" src-bold="${nsfont.NotoSansCJKjp_Bold}" bytes="2" />
+	<#elseif .locale == "ko_KR">
+		<link name="NotoSansCJKkr" type="font" subtype="opentype" src="${nsfont.NotoSansCJKkr_Regular}" src-bold="${nsfont.NotoSansCJKkr_Bold}" bytes="2" />
+	<#elseif .locale == "th_TH">
+		<link name="NotoSansThai" type="font" subtype="opentype" src="${nsfont.NotoSansThai_Regular}" src-bold="${nsfont.NotoSansThai_Bold}" bytes="2" />
 	</#if>
+    <macrolist>
+        <macro id="nlheader">
+            <table class="header" style="width: 100%;">
+				<tr>
+					<td rowspan="3" style="padding: 0px; width: 66.66.33%;">
+					<#if RECORD_PDF.subsidiary_logo?has_content>
+						<img src="${companyInformation.logoUrl}"  style="float: left; margin: 7px" width="175" height="55"/>
+					</#if>
+					<span class="nameandaddress" style="font-size: 8pt;">${RECORD_PDF.subsidiary_adress}</span></td>
+					<td align="right" style="width: 33.33%;"><span class="title">Invoice</span></td>
+				</tr>
+				<tr>
+					<#assign docNum = RECORD_PDF.docNum>
+					<td align="right" style="width: 33.33%;"><span class="number">#${docNum}</span></td>
+				</tr>
+				<tr>
+					<td align="right" style="width: 33.33%;">${RECORD_PDF.date}</td>
+				</tr>
+			</table>
+        </macro>
+        <macro id="nlfooter">
+            <table class="footer" style="width: 100%;">
+				<tr>
+					<td><barcode codetype="code128" showtext="true" value="${RECORD_PDF.docNum}"/></td>
+					<td align="right"><pagenumber/> of <totalpages/></td>
+				</tr>
+			</table>
+        </macro>
+    </macrolist>
+    <style type="text/css">* {
+		<#if .locale == "zh_CN">
+			font-family: NotoSans, NotoSansCJKsc, sans-serif;
+		<#elseif .locale == "zh_TW">
+			font-family: NotoSans, NotoSansCJKtc, sans-serif;
+		<#elseif .locale == "ja_JP">
+			font-family: NotoSans, NotoSansCJKjp, sans-serif;
+		<#elseif .locale == "ko_KR">
+			font-family: NotoSans, NotoSansCJKkr, sans-serif;
+		<#elseif .locale == "th_TH">
+			font-family: NotoSans, NotoSansThai, sans-serif;
+		<#else>
+			font-family: NotoSans, sans-serif;
+		</#if>
+		}
+		table {
+			font-size: 9pt;
+			table-layout: fixed;
+		}
+        th {
+            font-weight: bold;
+            font-size: 8pt;
+            vertical-align: middle;
+            padding: 5px 6px 3px;
+            background-color: #2D5EA8;
+            color: #ffffff;
+        }
+        td {
+            padding: 4px 6px;
+        }
+		td p { align:left }
+        b {
+            font-weight: bold;
+            color: #333333;
+        }
+        table.header td {
+            padding: 0px;
+            font-size: 10pt;
+        }
+        table.footer td {
+            padding: 0px;
+            font-size: 8pt;
+        }
+        table.itemtable th {
+            padding-bottom: 5px;
+            padding-top: 5px;
+        }
+        table.body td {
+            padding-top: 2px;
+        }
+        table.total {
+            page-break-inside: avoid;
+        }
+        tr.totalrow {
+            background-color: #e3e3e3;
+            line-height: 200%;
+        }
+        td.totalboxtop {
+            font-size: 12pt;
+            background-color: #e3e3e3;
+        }
+        td.addressheader {
+            font-size: 8pt;
+            padding-top: 6px;
+            padding-bottom: 2px;
+        }
+        td.address {
+            padding-top: 0px;
+        }
+        td.totalboxmid {
+            font-size: 22pt;
+            padding-top: 20px;
+            background-color: #e3e3e3;
+        }
+        td.totalboxbot {
+            background-color: #e3e3e3;
+            font-weight: bold;
+        }
+        span.title {
+            font-size: 22pt;
+        }
+        span.number {
+            font-size: 14pt;
+          color: #ce0000;
+        }
+        span.itemname {
+            font-weight: bold;
+            line-height: 150%;
+        }
+        hr {
+            width: 100%;
+            color: #d3d3d3;
+            background-color: #d3d3d3;
+            height: 1px;
+        }
+	</style>
+</head>
+<body header="nlheader" header-height="10%" footer="nlfooter" footer-height="20pt" padding="0.5in 0.5in 0.5in 0.5in" size="Letter">
+    <table style="width: 100%; margin-top: 10px;">
+		<tr>
+			<td class="addressheader" colspan="5" style="width: 33.33%;"><b>Bill To</b></td>
+			<td class="addressheader" colspan="4" style="width: 33.33%;"><b> </b></td>
+			<td class="totalboxtop" colspan="5" style="width: 33.33%;"><b>TOTAL</b></td>
+		</tr>
+		<tr>
+			<td class="address" colspan="5" rowspan="2" style="width: 33.33%;">${RECORD_PDF.address}</td>
+			<td class="address" colspan="4" rowspan="2" style="width: 33.33%;"> </td>
+			<td align="right" class="totalboxmid" colspan="5" style="width: 33.33%;">$${RECORD_PDF.total}</td>
+		</tr>
+		<tr>
+			<!--<td align="right" class="totalboxbot" colspan="5"><b>${record.trandate@label}:</b> ${record.trandate}</td>-->
+		</tr>
+	</table>
+
+	<table class="body" style="width: 100%; margin-top: 10px;">
+		<tr>
+			<th align="left">Terms</th>
+			<th align="left">Due Date</th>
+			<th align="left">PO #</th>
+		</tr>
+		<tr>
+			<td >${RECORD_PDF.terms}</td>
+			<td>${RECORD_PDF.dueDate}</td>
+			<td>${RECORD_PDF.poNum}</td>
+		</tr>
+	</table>
+<#if RECORD_PDF.items?has_content>
+	<table class="itemtable" style="width: 100%; margin-top: 10px;">
+		<!-- start items -->
+		<#assign categoryGroup = '0'>
+		<#list RECORD_PDF.items as item>
+			<#if item_index==0>
+				<thead>
+					<tr>
+						<th align="center" colspan="2">Quantity</th>
+						<th colspan="14">Item</th>
+						<th align="right" colspan="3">Rate</th>
+						<th align="right" colspan="3">Amount</th>
+					</tr>
+				</thead>
+				<#assign categoryGroup = item.itemCategory>
+				<tr style="background-color: #e3e3e3; width: 16.66%;">
+					<td align="left" colspan="22">${categoryGroup}</td>
+				</tr>
+			</#if>
+			<#assign category = item.itemCategory>
+			<#if categoryGroup!=category>
+				<#assign categoryGroup = item.itemCategory>
+				<tr style="background-color: #e3e3e3; width: 16.66%;">
+					<td align="left" colspan="22" >${categoryGroup}</td>
+				</tr>
+			</#if>
+			<tr>
+				<td align="center" colspan="2" line-height="150%">${item.itemQuan}</td>
+				<td colspan="14"><span class="itemname">${item.itemName}</span><br />${item.description}</td>
+				<td align="right" colspan="3">$${item.itemRate}</td>
+				<td align="right" colspan="3">$${item.itemAmoun}</td>
+			</tr>
+		</#list>
+		<!-- end items -->
+	</table>
+	<hr />
+</#if>
+<table class="total" style="width: 100%;">
+  	<tr>
+		<td colspan="3" > </td>
+		<td> </td>
+		<td align="right" style="width: 16.66%;"><b>Subtotal</b></td>
+		<td align="right" style="width: 16.66%;">$${RECORD_PDF.itemAvg}</td>
+	</tr>
+	<tr>
+		<td background-color="#f7f7f7" colspan="3">Memo</td>
+		<td> </td>
+		<td align="right" style="width: 16.66%;"><b>Tax</b></td>
+		<td align="right" style="width: 16.66%;">$${RECORD_PDF.taxAvg}</td>
+	</tr>
+	<tr>
+		<td rowspan="4" background-color="#f7f7f7" colspan="3">${RECORD_PDF.memo}</td>
+       	<td> </td>
+		<td align="right" style="background-color: #e3e3e3; width: 16.66%;"><b>Total</b></td>
+		<td align="right" style="background-color: #e3e3e3; width: 16.66%;">${RECORD_PDF.total}</td>
+	</tr>
+</table>
+</body>
 </pdf>
